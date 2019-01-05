@@ -27,7 +27,7 @@ window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
 allowResponses = false;
 
-outputText = 'Trial,IsGo,WasResponse,PresentationTime,ResponseTime\n';
+outputText = 'Trial,IsGo,PresentationTime,ResponseTime\n';
 
 function start() {
 	if(isPractice) {
@@ -85,7 +85,7 @@ function endTrial() {
 	allowResponses = false;
 	textArea.textContent = ''
 	outputText +=
-		(trialIdx + 1) + ',' +
+		(isPractice? 0: trialIdx + 1) + ',' +
 		isGo[trialIdx] + ',' +
 		presentationTime + ',' +
 		responseTime + '\n';
