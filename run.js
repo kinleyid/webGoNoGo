@@ -10,9 +10,9 @@ var masterBlockwiseLengths = [20, 20, 20];
 var masterBlockwisePpnGos = [0.8, 0.2, 0.5];
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
-var gamify = false;
+var gamify = true;
 if (gamify) {
-	var maxPoints = 50, pointLoss = -maxPoints, currPoints;
+	var maxPoints = 50, pointLoss = -2*maxPoints, currPoints;
 	var pointsBarTimeIncr = 1000/60; // Roughly screen rate
 	var addPointsTimeIncr = 1000/60; // Roughly screen rate
 	var postFeedbackMs = 500;
@@ -20,9 +20,6 @@ if (gamify) {
     var pointsBar = document.getElementById("pointsBar");
     var pointsBarStopId;
     var score = 0;
-    scoreArea.style.display = 'block';
-} else {
-    scoreArea.style.display = 'none';
 }
 
 var isPractice = true;
@@ -42,7 +39,7 @@ window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
 allowResponses = false;
 
-outputText = 'Trial,IsGo,PresentationTime,ResponseTime\n';
+outputText = 'Trial,IsGo,Response,PresentationTime,ResponseTime\n';
 
 function start() {
 	if (isPractice) {
@@ -60,7 +57,7 @@ function start() {
 }
 
 function runTrial() {
-	setTimeout(function() {		
+	setTimeout(function() {
 		fixationCross();
 		setTimeout(function() {
 			if (postFixationMs > 0) {
@@ -83,6 +80,7 @@ function showStim() {
 	} else {
 		textArea.textContent = "W";
 	}
+	response = false;
 	allowResponses = true;
 	timeoutID = setTimeout(endTrial, allowResponsesMs);
 	if (gamify) {
@@ -107,6 +105,7 @@ function showPointsBar() {
 
 function respondToInput(event) {
 	responseTime = performance.now();
+	response = true;
 	if (allowResponses && event.code == 'Space') {
 		clearTimeout(timeoutID);
 		endTrial();
@@ -119,14 +118,20 @@ function endTrial() {
 	outputText +=
 		(isPractice? 0: trialIdx + 1) + ',' +
 		isGo[trialIdx] + ',' +
+		response + ',' +
 		presentationTime + ',' +
 		responseTime + '\n';
 	
 	if (gamify) {
         pointsBar.style.display = 'none';
+		scoreArea.style.display = 'block';
         clearTimeout(pointsBarStopId);
 		if (!isGo[trialIdx]) {
-			currPoints = pointLoss;
+			if (response) {
+				currPoints = pointLoss;
+			} else {
+				currPoints = maxPoints;
+			}
 		}
 		addPoints(nextTrial);
     } else {
@@ -154,7 +159,7 @@ function addPoints(nextFunction) {
         );
     } else {
         setTimeout(function() {
-			scoreArea.style.color = 'black';
+			scoreArea.style.display = 'none';
 			nextFunction();
 		}, postFeedbackMs);
     }

@@ -73,6 +73,7 @@ input[type=text], select {
     top: 0;
     left: 0;
     margin-left: 2vw;
+	display: none;
 }
 
 #textArea {
