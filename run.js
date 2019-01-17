@@ -1,4 +1,8 @@
 
+var ALL = document.getElementsByTagName("html")[0];
+var dialogArea = document.getElementById("dialogArea");
+var textArea = document.getElementById("textArea");
+
 var filename = 'defaultFilename'
 
 var preFixationMs = 1000;
@@ -6,11 +10,11 @@ var fixationMs = 1000;
 var postFixationMs = 0;
 var allowResponsesMs = 2500; // How long should participants be allowed to respond?
 
-var masterBlockwiseLengths = [20, 20, 20];
-var masterBlockwisePpnGos = [0.8, 0.2, 0.5];
+var masterBlockwiseLengths = [10, 10];
+var masterBlockwisePpnGos = [0.8, 0.8];
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
-var gamify = true;
+var gamify = false;
 if (gamify) {
 	var maxPoints = 50, pointLoss = -2*maxPoints, currPoints;
 	var pointsBarTimeIncr = 1000/60; // Roughly screen rate
@@ -23,17 +27,17 @@ if (gamify) {
 }
 
 var isPractice = true;
+var practiceFeedback = true;
 if (isPractice) {
 	var practiceBlockwiseLengths = [20];
 	var practiceBlockwisePpnGos = [0.8];
 	var practiceIsGo = generateStimuli(practiceBlockwiseLengths, practiceBlockwisePpnGos)
+	dialogArea.innerHTML += '<button onclick="start()">Start practice</button>';
+} else {
+	dialogArea.innerHTML += '<button onclick="start()">Start</button';
 }
 
 var timeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTime = 0;
-
-var ALL = document.getElementsByTagName("html")[0];
-var dialogArea = document.getElementById("dialogArea");
-var textArea = document.getElementById("textArea");
 
 window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
@@ -80,7 +84,7 @@ function showStim() {
 	} else {
 		textArea.textContent = "W";
 	}
-	response = false;
+	wasResponse = false;
 	allowResponses = true;
 	timeoutID = setTimeout(endTrial, allowResponsesMs);
 	if (gamify) {
@@ -105,8 +109,8 @@ function showPointsBar() {
 
 function respondToInput(event) {
 	responseTime = performance.now();
-	response = true;
 	if (allowResponses && event.code == 'Space') {
+		wasResponse = true;
 		clearTimeout(timeoutID);
 		endTrial();
 	}
@@ -118,7 +122,7 @@ function endTrial() {
 	outputText +=
 		(isPractice? 0: trialIdx + 1) + ',' +
 		isGo[trialIdx] + ',' +
-		response + ',' +
+		wasResponse + ',' +
 		presentationTime + ',' +
 		responseTime + '\n';
 	
@@ -127,16 +131,22 @@ function endTrial() {
 		scoreArea.style.display = 'block';
         clearTimeout(pointsBarStopId);
 		if (!isGo[trialIdx]) {
-			if (response) {
+			if (wasResponse) {
 				currPoints = pointLoss;
 			} else {
 				currPoints = maxPoints;
 			}
 		}
 		addPoints(nextTrial);
+    } else if (isPractice && practiceFeedback) {
+        if ((wasResponse && !isGo[trialIdx]) || (!wasResponse && isGo[trialIdx])) {
+            practiceFeedbackScreen();
+        } else {
+            nextTrial();
+        }
     } else {
-		nextTrial();
-	}
+        nextTrial();
+    }
 }
 
 function addPoints(nextFunction) {
@@ -165,7 +175,23 @@ function addPoints(nextFunction) {
     }
 }
 
+function practiceFeedbackScreen() {
+	ALL.style.cursor = "default";
+    textArea.style.display = 'none';
+    dialogArea.style.display = 'block';
+    if (wasResponse && !isGo[trialIdx]) {
+        dialogArea.innerHTML = '<p class="dialog">Incorrect.<br><br>Do not react when you see "W".</p>';
+    } else if (!wasResponse && isGo[trialIdx]) {
+        dialogArea.innerHTML = '<p class="dialog">Incorrect.<br><br>Press the space bar or tap your touch screen (if you have one) when you see "M".<br><br>React as quickly as you can.</p>';
+    }
+	dialogArea.innerHTML += '<button class="dialog" onclick="nextTrial()">Continue</button>';
+    trialIdx--;
+}
+
 function nextTrial() {
+	ALL.style.cursor = "none";
+    dialogArea.style.display = 'none';
+    textArea.style.display = 'block';
 	trialIdx++;
 	if (trialIdx == isGo.length) {
 		if (isPractice) {
