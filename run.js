@@ -5,19 +5,21 @@ var textArea = document.getElementById("textArea");
 
 var filename = 'defaultFilename'
 
-var preFixationMs = 500;
-var fixationMs = 250;
+var preFixationMs = 0;
+var fixationMs = 500;
 var postFixationMs = 0;
-var stimDisplayMs = 250;
-var allowResponsesMs = 1000; // How long should participants be allowed to respond?
+var stimDisplayMs = 1000;
+var allowResponsesMs = 1500; // How long should participants be allowed to respond?
 
-var responsesTruncateDisplay = false;
+var responsesTruncateTrials = false;
+var responsesHideStim = true;
 
-var goStim = ['1', '3', '5', '7'];
-var noGoStim = ['2', '4', '6', '8'];
+// var goStim = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'Y', 'Z'];
+var goStim = ['M'];
+var noGoStim = ['W'];
 
-var masterBlockwiseLengths = [10, 10, 10];
-var masterBlockwisePpnGos = [0.8, 0.8, 0.8];
+var masterBlockwiseLengths = Array(5).fill(10);
+var masterBlockwisePpnGos = Array(5).fill(0.8);
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
 var gamify = false;
@@ -35,7 +37,7 @@ if (gamify) {
 var isPractice = true;
 var practiceFeedback = true;
 if (isPractice) {
-	var practiceBlockwiseLengths = [10, 10];
+	var practiceBlockwiseLengths = [5, 5];
 	var practiceBlockwisePpnGos = [0.8, 0.8];
 	var practiceIsGo = generateStimuli(practiceBlockwiseLengths, practiceBlockwisePpnGos)
 	dialogArea.innerHTML += '<button onclick="start()">Start practice</button>';
@@ -43,7 +45,7 @@ if (isPractice) {
 	dialogArea.innerHTML += '<button onclick="start()">Start</button';
 }
 
-var timeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTimeHolder, responseTime = 0;
+var timeoutID, hideStimTimeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTimeHolder, responseTime = 0;
 
 window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
@@ -93,7 +95,7 @@ function showStim() {
 	wasResponse = false;
 	allowResponses = true;
 	timeoutID = setTimeout(endTrial, allowResponsesMs);
-	setTimeout(hideStim, stimDisplayMs);
+	hideStimTimeoutID = setTimeout(hideStim, stimDisplayMs);
 	if (gamify) {
 		currPoints = maxPoints;
 		pointsBarStopId = setTimeout(function() {
@@ -124,8 +126,13 @@ function respondToInput(event) {
 		responseTime = responseTimeHolder;
 		wasResponse = true;
 		allowResponses = false
-		if (responsesTruncateDisplay) {
+		if (responsesHideStim) {
+			clearTimeout(hideStimTimeoutID);
+			hideStim();
+		}
+		if (responsesTruncateTrials) {
 			clearTimeout(timeoutID);
+			clearTimeout(hideStimTimeoutID);
 			endTrial();
 		}
 	}
