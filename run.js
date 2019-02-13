@@ -5,13 +5,19 @@ var textArea = document.getElementById("textArea");
 
 var filename = 'defaultFilename'
 
-var preFixationMs = 1000;
-var fixationMs = 1000;
+var preFixationMs = 500;
+var fixationMs = 250;
 var postFixationMs = 0;
-var allowResponsesMs = 2500; // How long should participants be allowed to respond?
+var stimDisplayMs = 250;
+var allowResponsesMs = 1000; // How long should participants be allowed to respond?
 
-var masterBlockwiseLengths = [10, 10];
-var masterBlockwisePpnGos = [0.8, 0.8];
+var responsesTruncateDisplay = false;
+
+var goStim = ['1', '3', '5', '7'];
+var noGoStim = ['2', '4', '6', '8'];
+
+var masterBlockwiseLengths = [10, 10, 10];
+var masterBlockwisePpnGos = [0.8, 0.8, 0.8];
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
 var gamify = false;
@@ -29,21 +35,21 @@ if (gamify) {
 var isPractice = true;
 var practiceFeedback = true;
 if (isPractice) {
-	var practiceBlockwiseLengths = [20];
-	var practiceBlockwisePpnGos = [0.8];
+	var practiceBlockwiseLengths = [10, 10];
+	var practiceBlockwisePpnGos = [0.8, 0.8];
 	var practiceIsGo = generateStimuli(practiceBlockwiseLengths, practiceBlockwisePpnGos)
 	dialogArea.innerHTML += '<button onclick="start()">Start practice</button>';
 } else {
 	dialogArea.innerHTML += '<button onclick="start()">Start</button';
 }
 
-var timeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTime = 0;
+var timeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTimeHolder, responseTime = 0;
 
 window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
-allowResponses = false;
+var allowResponses = false;
 
-outputText = 'Trial,IsGo,Response,PresentationTime,ResponseTime\n';
+var outputText = 'Trial,IsGo,Response,PresentationTime,ResponseTime\n';
 
 function start() {
 	if (isPractice) {
@@ -80,13 +86,14 @@ function fixationCross() {
 
 function showStim() {
 	if (isGo[trialIdx]) {
-		textArea.textContent = "M";
+		textArea.textContent = goStim[Math.floor(Math.random()*goStim.length)];
 	} else {
-		textArea.textContent = "W";
+		textArea.textContent = noGoStim[Math.floor(Math.random()*noGoStim.length)];
 	}
 	wasResponse = false;
 	allowResponses = true;
 	timeoutID = setTimeout(endTrial, allowResponsesMs);
+	setTimeout(hideStim, stimDisplayMs);
 	if (gamify) {
 		currPoints = maxPoints;
 		pointsBarStopId = setTimeout(function() {
@@ -95,6 +102,10 @@ function showStim() {
 		}, pointsBarTimeIncr);
 	}
 	presentationTime = performance.now();
+}
+
+function hideStim() {
+	textArea.textContent = '';
 }
 
 function showPointsBar() {
@@ -108,17 +119,21 @@ function showPointsBar() {
 }
 
 function respondToInput(event) {
-	responseTime = performance.now();
+	responseTimeHolder = performance.now();
 	if (allowResponses && event.code == 'Space') {
+		responseTime = responseTimeHolder;
 		wasResponse = true;
-		clearTimeout(timeoutID);
-		endTrial();
+		allowResponses = false
+		if (responsesTruncateDisplay) {
+			clearTimeout(timeoutID);
+			endTrial();
+		}
 	}
 }
 
 function endTrial() {
 	allowResponses = false;
-	textArea.textContent = ''
+	textArea.textContent = '';
 	outputText +=
 		(isPractice? 0: trialIdx + 1) + ',' +
 		isGo[trialIdx] + ',' +
