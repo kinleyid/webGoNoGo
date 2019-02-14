@@ -18,8 +18,8 @@ var responsesHideStim = true;
 var goStim = ['M'];
 var noGoStim = ['W'];
 
-var masterBlockwiseLengths = Array(10).fill(10);
-var masterBlockwisePpnGos = Array(10).fill(0.8);
+var masterBlockwiseLengths = Array(1).fill(100);
+var masterBlockwisePpnGos = Array(1).fill(0.8);
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
 var gamify = false;
@@ -47,7 +47,7 @@ if (isPractice) {
 
 var timeoutID, hideStimTimeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTimeHolder, responseTime = 0;
 
-window.addEventListener("click", respondToInput);
+window.addEventListener("touchend", respondToInput, false);
 window.onkeydown = respondToInput;
 var allowResponses = false;
 
@@ -55,8 +55,10 @@ var outputText = 'time,event\n';
 
 function start() {
 	if (isPractice) {
+		outputText += performance.now() + ',practice_start\n';
 		isGo = practiceIsGo;
 	} else {
+		outputText += performance.now() + ',task_start\n';
 		isGo = masterIsGo;
 	}
 	
@@ -122,7 +124,10 @@ function showPointsBar() {
 }
 
 function respondToInput(event) {
-	outputText += event.timeStamp + ',response\n';
+	if (event.code != undefined && event.code != 'Space') { // Don't record non-spacebar presses
+		return;
+	}
+	outputText += event.timeStamp + ',response\n'; // Record everything else, regardless of whether the trial has been cut off
 	if (allowResponses) {
 		wasResponse = true;
 		allowResponses = false;
