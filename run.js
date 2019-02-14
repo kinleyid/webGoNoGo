@@ -5,11 +5,11 @@ var textArea = document.getElementById("textArea");
 
 var filename = 'defaultFilename'
 
-var preFixationMs = 0;
+var preFixationMs = 500;
 var fixationMs = 500;
 var postFixationMs = 0;
-var stimDisplayMs = 1000;
-var allowResponsesMs = 1500; // How long should participants be allowed to respond?
+var stimDisplayMs = 500;
+var allowResponsesMs = 500; // How long before the trial ends? (space presses afterward are still recorded)
 
 var responsesTruncateTrials = false;
 var responsesHideStim = true;
@@ -18,8 +18,8 @@ var responsesHideStim = true;
 var goStim = ['M'];
 var noGoStim = ['W'];
 
-var masterBlockwiseLengths = Array(5).fill(10);
-var masterBlockwisePpnGos = Array(5).fill(0.8);
+var masterBlockwiseLengths = Array(10).fill(10);
+var masterBlockwisePpnGos = Array(10).fill(0.8);
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
 var gamify = false;
@@ -51,7 +51,7 @@ window.addEventListener("click", respondToInput);
 window.onkeydown = respondToInput;
 var allowResponses = false;
 
-var outputText = 'Trial,IsGo,Response,PresentationTime,ResponseTime\n';
+var outputText = 'time,event\n';
 
 function start() {
 	if (isPractice) {
@@ -84,6 +84,7 @@ function runTrial() {
 
 function fixationCross() {
 	textArea.textContent = "\u2022";
+	outputText += performance.now() + ',fixation\n';
 }
 
 function showStim() {
@@ -103,7 +104,7 @@ function showStim() {
 			showPointsBar();
 		}, pointsBarTimeIncr);
 	}
-	presentationTime = performance.now();
+	outputText += performance.now() + ',' + (isGo[trialIdx] ? 'go' : 'nogo') + '\n';
 }
 
 function hideStim() {
@@ -121,11 +122,10 @@ function showPointsBar() {
 }
 
 function respondToInput(event) {
-	responseTimeHolder = performance.now();
-	if (allowResponses && event.code == 'Space') {
-		responseTime = responseTimeHolder;
+	outputText += event.timeStamp + ',response\n';
+	if (allowResponses) {
 		wasResponse = true;
-		allowResponses = false
+		allowResponses = false;
 		if (responsesHideStim) {
 			clearTimeout(hideStimTimeoutID);
 			hideStim();
@@ -141,13 +141,6 @@ function respondToInput(event) {
 function endTrial() {
 	allowResponses = false;
 	textArea.textContent = '';
-	outputText +=
-		(isPractice? 0: trialIdx + 1) + ',' +
-		isGo[trialIdx] + ',' +
-		wasResponse + ',' +
-		presentationTime + ',' +
-		responseTime + '\n';
-	
 	if (gamify) {
         pointsBar.style.display = 'none';
 		scoreArea.style.display = 'block';
@@ -204,7 +197,7 @@ function practiceFeedbackScreen() {
     if (wasResponse && !isGo[trialIdx]) {
         dialogArea.innerHTML = '<p class="dialog">Incorrect.<br><br>Do not react when you see "W".</p>';
     } else if (!wasResponse && isGo[trialIdx]) {
-        dialogArea.innerHTML = '<p class="dialog">Incorrect.<br><br>Press the space bar or tap your touch screen (if you have one) when you see "M".<br><br>React as quickly as you can.</p>';
+        dialogArea.innerHTML = '<p class="dialog">Too slow!<br><br>Press the space bar or tap your touch screen (if you have one) when you see "M".<br><br>React as quickly as you can.</p>';
     }
 	dialogArea.innerHTML += '<button class="dialog" onclick="nextTrial()">Continue</button>';
     trialIdx--;
