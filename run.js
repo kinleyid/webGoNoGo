@@ -11,7 +11,7 @@ var noGoInstructions = 'When you see "X", do not do anything.';
 dialogArea.innerHTML = '<p class="dialog">' + goInstructions + '<br><br>' + noGoInstructions + '</p>';
 
 var preFixationMs = 500;
-var fixationMs = 0;
+var fixationMs = 500;
 var postFixationMs = 0;
 var stimDisplayMs = 500;
 var allowResponsesMs = 1000; // How long before the trial ends? (space presses afterward are still recorded)
