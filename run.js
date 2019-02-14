@@ -5,20 +5,26 @@ var textArea = document.getElementById("textArea");
 
 var filename = 'defaultFilename'
 
+var goInstructions = 'As soon as you see a letter other than "X", press the space bar or tap your touch screen if you have one. React as quickly as you can.';
+var noGoInstructions = 'When you see "X", do not do anything.';
+
+dialogArea.innerHTML = '<p class="dialog">' + goInstructions + '<br><br>' + noGoInstructions + '</p>';
+
 var preFixationMs = 500;
-var fixationMs = 500;
+var fixationMs = 0;
 var postFixationMs = 0;
 var stimDisplayMs = 500;
-var allowResponsesMs = 500; // How long before the trial ends? (space presses afterward are still recorded)
+var allowResponsesMs = 1000; // How long before the trial ends? (space presses afterward are still recorded)
 
 var responsesTruncateTrials = false;
 var responsesHideStim = true;
 
-// var goStim = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'Y', 'Z'];
-var goStim = ['M'];
-var noGoStim = ['W'];
+var goStim = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'Y', 'Z'];
+var noGoStim = ['X'];
+// var goStim = ['M'];
+// var noGoStim = ['W'];
 
-var masterBlockwiseLengths = Array(1).fill(100);
+var masterBlockwiseLengths = Array(1).fill(200);
 var masterBlockwisePpnGos = Array(1).fill(0.8);
 var masterIsGo = generateStimuli(masterBlockwiseLengths, masterBlockwisePpnGos)
 
@@ -40,6 +46,8 @@ if (isPractice) {
 	var practiceBlockwiseLengths = [5, 5];
 	var practiceBlockwisePpnGos = [0.8, 0.8];
 	var practiceIsGo = generateStimuli(practiceBlockwiseLengths, practiceBlockwisePpnGos)
+	var goFeedback = '<p class="dialog">Too slow!<br><br>' + goInstructions + '</p>';
+	var noGoFeedback = '<p class="dialog">Incorrect.<br><br>' + noGoInstructions + '</p>';
 	dialogArea.innerHTML += '<button onclick="start()">Start practice</button>';
 } else {
 	dialogArea.innerHTML += '<button onclick="start()">Start</button';
@@ -47,7 +55,7 @@ if (isPractice) {
 
 var timeoutID, hideStimTimeoutID, trialIdx, wasResponse = false, presentationTime = 0, responseTimeHolder, responseTime = 0;
 
-window.addEventListener("touchend", respondToInput, false);
+window.addEventListener("touchstart", respondToInput, false);
 window.onkeydown = respondToInput;
 var allowResponses = false;
 
@@ -72,7 +80,9 @@ function start() {
 
 function runTrial() {
 	setTimeout(function() {
-		fixationCross();
+		if (fixationMs > 0) {
+			fixationCross();
+		}
 		setTimeout(function() {
 			if (postFixationMs > 0) {
 				textArea.textContent = '';
@@ -200,9 +210,9 @@ function practiceFeedbackScreen() {
     textArea.style.display = 'none';
     dialogArea.style.display = 'block';
     if (wasResponse && !isGo[trialIdx]) {
-        dialogArea.innerHTML = '<p class="dialog">Incorrect.<br><br>Do not react when you see "W".</p>';
+        dialogArea.innerHTML = noGoFeedback;
     } else if (!wasResponse && isGo[trialIdx]) {
-        dialogArea.innerHTML = '<p class="dialog">Too slow!<br><br>Press the space bar or tap your touch screen (if you have one) when you see "M".<br><br>React as quickly as you can.</p>';
+        dialogArea.innerHTML = goFeedback;
     }
 	dialogArea.innerHTML += '<button class="dialog" onclick="nextTrial()">Continue</button>';
     trialIdx--;
