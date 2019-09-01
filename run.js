@@ -1,9 +1,12 @@
 
+// Get participant ID
+var decoded = decodeURIComponent(window.location.search);
+var pID = decoded.substring(decoded.indexOf('=')+1);
+var filename = pID + 'GNG';
+
 var ALL = document.getElementsByTagName("html")[0];
 var dialogArea = document.getElementById("dialogArea");
 var textArea = document.getElementById("textArea");
-
-var filename = 'defaultFilename'
 
 var goInstructions = 'As soon as you see a letter other than "X", press the space bar or tap your touch screen if you have one. React as quickly as you can.';
 var noGoInstructions = 'When you see "X", do not do anything.';
@@ -17,7 +20,7 @@ var stimDisplayMs = 500;
 var allowResponsesMs = 1000; // How long before the trial ends? (space presses afterward are still recorded)
 
 var responsesTruncateTrials = false;
-var responsesHideStim = true;
+var responsesHideStim = false;
 
 var goStim = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'Y', 'Z'];
 var noGoStim = ['X'];
@@ -227,7 +230,7 @@ function nextTrial() {
 		if (isPractice) {
 			postPracticeScreen();
 		} else {
-			saveData();
+			saveDataAndRedirect(filename, outputText, pID);
 		}
 	} else {
 		runTrial();
@@ -241,23 +244,6 @@ function postPracticeScreen() {
 	textArea.style.display = 'none';
 	dialogArea.innerHTML = '<p class="dialog">That was the end of the practice round.<br><br>Click to start the game for real.<br><br>' +
 		'<button onclick="start()">Start game</button>';
-}
-
-function saveData() {
-    xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (xhttp.status == 200) {
-            textArea.style.display = 'none';
-            dialogArea.style.display = 'block';
-            dialogArea.textContent = 'Thank you!';
-        } else if (xhttp.status == 500) {
-            saveData();
-        }
-    };
-    xhttp.open("POST", "saveData.php", true);
-    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    VarsToSend = "filename="+filename + "&txt="+outputText;
-    xhttp.send(VarsToSend);
 }
 
 function generateStimuli(lens, ppnGos) {
@@ -283,4 +269,26 @@ function sample(urInArray, nSamples) {
 	} else {
 		return outArray[0];
 	}
+}
+
+function saveDataAndRedirect(filename, txt, pID) {
+    filename = 'Data/' + filename;
+	var form = document.createElement('form');
+    document.body.appendChild(form);
+    form.method = 'post';
+	form.action = 'saveData.php';
+	var data = {
+		filename: filename,
+		txt: txt,
+		pID: pID
+	}
+	var name;
+    for (name in data) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = data[name];
+        form.appendChild(input);
+    }
+    form.submit();
 }
